@@ -1,19 +1,9 @@
-import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
-import { persistReducer, persistStore } from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import { configureStore } from '@reduxjs/toolkit';
+import { contactsApi } from './conactsApi';
 import rootReducer from './reducer';
 
-const persistConfig = {
-  key: 'phonebook',
-  storage,
-  blacklist: ['filter'],
-};
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 export const store = configureStore({
-  reducer: persistedReducer,
-  middleware: getDefaultMiddleware({ serializableCheck: false }),
+  reducer: rootReducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(contactsApi.middleware),
 });
-
-export const persistor = persistStore(store);
