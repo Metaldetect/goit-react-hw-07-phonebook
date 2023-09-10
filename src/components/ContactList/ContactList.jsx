@@ -1,14 +1,19 @@
 import React from 'react';
 import { ContactListWrapper } from './ContactListStyles';
 import { useSelector } from 'react-redux';
-import { getContacts, getFilter } from 'redux/selectors';
+import { getFilter } from 'redux/selectors';
 import ContactItem from 'components/ContactListItem';
 import Notiflix from 'notiflix';
 
-function ContactList() {
-  const filter = useSelector(getFilter);
-  const contacts = useSelector(getContacts);
+import { useGetContactsQuery } from 'redux/contactsApi';
 
+function ContactList() {
+  const { data: contacts } = useGetContactsQuery();
+  const filter = useSelector(getFilter);
+  
+  if (!contacts) {
+    return null;
+  }
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(filter.toLowerCase())
   );
