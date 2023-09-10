@@ -12,8 +12,8 @@ export const contactsApi = createApi({
       providesTags: ['contacts'],
     }),
     getFilter: builder.query({
-      query: filter => `/contacts?name=${filter}`,
-      providesTags: ['Filter'],
+      query: (name = '') => `/contacts${name ? `?name=${name}` : ''}`,
+      providesTags: ['contacts'],
     }),
 
     addContactToFilter: builder.mutation({
