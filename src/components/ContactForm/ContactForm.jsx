@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as Yup from 'yup';
 import { Formik, Form, Field } from 'formik';
 import { nanoid } from 'nanoid';
@@ -15,6 +15,10 @@ import {
 import { useDispatch } from 'react-redux';
 import { addContact } from 'redux/contactSlice';
 import Notiflix from 'notiflix';
+import {
+  useAddContactToFilterMutation,
+  useGetContactsQuery,
+} from 'redux/contactsApi';
 
 const phonebookSchema = Yup.object().shape({
   name: Yup.string()
@@ -40,17 +44,20 @@ function ContactForm({ contacts }) {
   };
 
   const dispatch = useDispatch();
+  const [addContactToFilter] = useAddContactToFilterMutation();
+  const { data: cachedContacts } = useGetContactsQuery();
 
-  const isContactDuplicate = (name, phone) => {
-    return contacts.some(
-      contact => contact.name === name || contact.phone === phone
-    );
-  };
-
-  const handleSubmit = (values, actions) => {
+  const handleSubmit = async (values, actions) => {
     const { name, phone } = values;
 
+    const isContactDuplicate = (name, phone) => {
+      return contacts.some(
+        contact => contact.name === name || contact.phone === phone
+      );
+    };
+
     const isDuplicateContact = isContactDuplicate(name, phone);
+
     if (isDuplicateContact) {
       Notiflix.Notify.failure(
         'Contact with the same name or phone number already exists!',
@@ -61,11 +68,23 @@ function ContactForm({ contacts }) {
       return;
     }
 
-    const newContact = { id: nanoid(), name, phone };
-    dispatch(addContact(newContact));
-    actions.resetForm();
+    try {
+      await addContactToFilter({ name, phone });
 
-    Notiflix.Notify.success('Contact added successfully!');
+      const newContact = { id: nanoid(), name, phone };
+      dispatch(addContact(newContact));
+      actions.resetForm();
+
+      if (cachedContacts) {
+        dispatch(addContact(cachedContacts));
+      }
+
+      Notiflix.Notify.success('Contact added successfully!');
+    } catch (error) {
+      Notiflix.Notify.failure('An error occurred while adding the contact.', {
+        position: 'center-top',
+      });
+    }
   };
 
   return (
