@@ -1,8 +1,7 @@
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import React from 'react';
 import * as Yup from 'yup';
 import { Formik, Form, Field } from 'formik';
-import { nanoid } from 'nanoid';
 import {
   ContactFormWrapper,
   ContactTitle,
@@ -12,10 +11,11 @@ import {
   Label,
   ErrorText,
 } from './ContactFormStyles';
-import { useDispatch } from 'react-redux';
 import Notiflix from 'notiflix';
-import { useAddContactToFilterMutation } from 'redux/contactsApi';
-import { addContact } from 'redux/contactSlice';
+import {
+  useAddContactToFilterMutation,
+  useGetContactsQuery,
+} from 'redux/contactsApi';
 
 const phonebookSchema = Yup.object().shape({
   name: Yup.string()
@@ -34,35 +34,34 @@ const phonebookSchema = Yup.object().shape({
     .required('Phone number is required'),
 });
 
-function ContactForm({ contacts }) {
+function ContactForm() {
   const initialValues = {
     name: '',
     phone: '',
   };
 
-  const dispatch = useDispatch();
+  const { data: contacts } = useGetContactsQuery();
   const [addContactToFilter] = useAddContactToFilterMutation();
+
+  const isContactDuplicate = (name, phone) => {
+    if (!contacts || !Array.isArray(contacts)) {
+      return false;
+    }
+    return contacts.some(
+      contact => contact.name === name || contact.phone === phone
+    );
+  };
 
   const handleSubmit = async (values, actions) => {
     const { name, phone } = values;
-
-    const isContactDuplicate = (name, phone) => {
-      if (!contacts || !Array.isArray(contacts)) {
-        return false;
-      }
-
-      return contacts.some(
-        contact => contact.name === name || contact.phone === phone
-      );
-    };
     const isDuplicateContact = isContactDuplicate(name, phone);
+
+    const successMessage = 'Contact added successfully!';
+    const errorMessage = 'An error occurred while adding the contact.';
 
     if (isDuplicateContact) {
       Notiflix.Notify.failure(
-        'Contact with the same name or phone number already exists!',
-        {
-          position: 'center-top',
-        }
+        'Contact with the same name or phone number already exists!'
       );
       return;
     }
@@ -71,20 +70,14 @@ function ContactForm({ contacts }) {
       const response = await addContactToFilter({ name, phone });
 
       if (response.error) {
-        Notiflix.Notify.failure('An error occurred while adding the contact.', {
-          position: 'center-top',
-        });
+        Notiflix.Notify.failure(errorMessage);
         return;
       }
-      const newContact = { id: nanoid(), name, phone };
-      dispatch(addContact(newContact));
-      actions.resetForm();
 
-      Notiflix.Notify.success('Contact added successfully!');
+      actions.resetForm();
+      Notiflix.Notify.success(successMessage);
     } catch (error) {
-      Notiflix.Notify.failure('An error occurred while adding the contact.', {
-        position: 'center-top',
-      });
+      Notiflix.Notify.failure(errorMessage);
     }
   };
 
@@ -116,8 +109,13 @@ function ContactForm({ contacts }) {
   );
 }
 
-// ContactForm.propTypes = {
-//   contacts: PropTypes.array.isRequired,
-// };
-
+ContactForm.propTypes = {
+  contacts: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      phone: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 export default ContactForm;
