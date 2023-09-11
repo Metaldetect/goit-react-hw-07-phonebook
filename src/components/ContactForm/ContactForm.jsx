@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+// import PropTypes from 'prop-types';
 import React from 'react';
 import * as Yup from 'yup';
 import { Formik, Form, Field } from 'formik';
@@ -13,12 +13,9 @@ import {
   ErrorText,
 } from './ContactFormStyles';
 import { useDispatch } from 'react-redux';
-import { addContact } from 'redux/contactSlice';
 import Notiflix from 'notiflix';
-import {
-  useAddContactToFilterMutation,
-  useGetContactsQuery,
-} from 'redux/contactsApi';
+import { useAddContactToFilterMutation } from 'redux/contactsApi';
+import { addContact } from 'redux/contactSlice';
 
 const phonebookSchema = Yup.object().shape({
   name: Yup.string()
@@ -45,17 +42,19 @@ function ContactForm({ contacts }) {
 
   const dispatch = useDispatch();
   const [addContactToFilter] = useAddContactToFilterMutation();
-  const { data: cachedContacts } = useGetContactsQuery();
 
   const handleSubmit = async (values, actions) => {
     const { name, phone } = values;
 
     const isContactDuplicate = (name, phone) => {
+      if (!contacts || !Array.isArray(contacts)) {
+        return false;
+      }
+
       return contacts.some(
         contact => contact.name === name || contact.phone === phone
       );
     };
-
     const isDuplicateContact = isContactDuplicate(name, phone);
 
     if (isDuplicateContact) {
@@ -69,15 +68,17 @@ function ContactForm({ contacts }) {
     }
 
     try {
-      await addContactToFilter({ name, phone });
+      const response = await addContactToFilter({ name, phone });
 
+      if (response.error) {
+        Notiflix.Notify.failure('An error occurred while adding the contact.', {
+          position: 'center-top',
+        });
+        return;
+      }
       const newContact = { id: nanoid(), name, phone };
       dispatch(addContact(newContact));
       actions.resetForm();
-
-      if (cachedContacts) {
-        dispatch(addContact(cachedContacts));
-      }
 
       Notiflix.Notify.success('Contact added successfully!');
     } catch (error) {
@@ -115,8 +116,8 @@ function ContactForm({ contacts }) {
   );
 }
 
-ContactForm.propTypes = {
-  contacts: PropTypes.array.isRequired,
-};
+// ContactForm.propTypes = {
+//   contacts: PropTypes.array.isRequired,
+// };
 
 export default ContactForm;
