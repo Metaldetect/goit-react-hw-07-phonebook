@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types';
+// import PropTypes from 'prop-types';
 import React from 'react';
 import * as Yup from 'yup';
 import { Formik, Form, Field } from 'formik';
@@ -109,13 +109,13 @@ function ContactForm() {
   );
 }
 
-ContactForm.propTypes = {
-  contacts: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      phone: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-};
+// ContactForm.propTypes = {
+//   contacts: PropTypes.arrayOf(
+//     PropTypes.shape({
+//       id: PropTypes.string.isRequired,
+//       name: PropTypes.string.isRequired,
+//       phone: PropTypes.string.isRequired,
+//     })
+//   ).isRequired,
+// };
 export default ContactForm;

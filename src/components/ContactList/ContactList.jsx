@@ -10,7 +10,7 @@ import { useGetContactsQuery } from 'redux/contactsApi';
 function ContactList() {
   const { data: contacts } = useGetContactsQuery();
   const filter = useSelector(getFilter);
-  
+
   if (!contacts) {
     return null;
   }
@@ -19,9 +19,7 @@ function ContactList() {
   );
 
   if (!filteredContacts?.length) {
-    Notiflix.Notify.info('No contacts found.', {
-      position: 'center-top',
-    });
+    Notiflix.Notify.info('No contacts found.');
   }
 
   return (
